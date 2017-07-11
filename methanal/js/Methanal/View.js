@@ -2026,7 +2026,7 @@ Methanal.View.FormInput.subclass(Methanal.View, 'TextInput').methods(
      */
     function onBlur(self, node) {
         Methanal.View.TextInput.upcall(self, 'onBlur', node);
-        if (self.embeddedLabel) {
+        if (self.embeddedLabel && self._labelTooltip) {
             self._labelTooltip.hide();
             if (self._needsLabel(node.value)) {
                 self._setLabel(node);
@@ -2048,7 +2048,7 @@ Methanal.View.FormInput.subclass(Methanal.View, 'TextInput').methods(
             self._removeLabel(node);
             node.value = '';
         }
-        if (self.embeddedLabel) {
+        if (self.embeddedLabel && self._labelTooltip) {
             self._labelTooltip.show();
         }
     },
