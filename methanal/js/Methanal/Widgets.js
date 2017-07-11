@@ -1711,6 +1711,7 @@ Nevow.Athena.Widget.subclass(Methanal.Widgets, 'TabView').methods(
         self._labels = {};
         self._tabs = {};
         self._groups = {};
+        self._loadedCallbacks = [];
         self.fullyLoaded = false;
         if (_makeThrobber === undefined) {
             _makeThrobber = function() { return self._defaultMakeThrobber(); };
@@ -2144,6 +2145,21 @@ Nevow.Athena.Widget.subclass(Methanal.Widgets, 'TabView').methods(
 
 
     /**
+     * Attach a callback to be invoked, with the tab view, when the tab view is
+     * fully loaded.
+     *
+     * Immediately invokes the callback if the tab view is fully loaded.
+     */
+    function onLoaded(self, f) {
+        if (self.fullyLoaded) {
+            f(self)
+        } else {
+            self._loadedCallbacks.push(f);
+        }
+    },
+
+
+    /**
      * Finalise TabView loading.
      */
     function _finishLoading(self) {
@@ -2157,6 +2173,10 @@ Nevow.Athena.Widget.subclass(Methanal.Widgets, 'TabView').methods(
         if (self._tabToSelect) {
             self.selectTab(self._tabToSelect);
         }
+        for (var i = 0; i < self._loadedCallbacks.length; i++) {
+            self._loadedCallbacks[i](self);
+        }
+        self._loadedCallbacks = [];
     });
 
 
