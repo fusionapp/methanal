@@ -47,12 +47,13 @@ Methanal.View.buildInputNodeMapping = function buildInputNodeMapping(node) {
  * @ivar outputs: Names of form outputs
  */
 Divmod.Class.subclass(Methanal.View, '_Handler').methods(
-    function __init__(self, handlerID, cache, fn, inputs, outputs) {
+    function __init__(self, handlerID, cache, fn, inputs, outputs, defaultValue) {
         self.handlerID = handlerID;
         self.cache = cache;
         self.fn = fn;
         self.inputs = inputs;
         self.outputs = outputs;
+        self.defaultValue = defaultValue;
     },
 
 
@@ -60,11 +61,15 @@ Divmod.Class.subclass(Methanal.View, '_Handler').methods(
         var values = [];
         for (var j = 0; j < self.inputs.length; ++j) {
             var name = self.inputs[j];
-            if (!self.cache.isActive(name)) {
+            var value;
+            if (self.cache.isActive(name)) {
+                value = self.cache.getData(name);
+            } else if (self.defaultValue !== undefined) {
+                value = self.defaultValue;
+            } else {
                 self.value = self.cache.failureValue;
                 return;
             }
-            var value = self.cache.getData(name);
             values.push(value);
         }
         self.value = self.fn.apply(null, values);
@@ -197,7 +202,7 @@ Divmod.Class.subclass(Methanal.View, '_HandlerCache').methods(
      * @type  outputs: C{Array} of C{String}
      * @param outputs: Sequence of control names of output controls
      */
-    function addHandler(self, fn, inputs, outputs) {
+    function addHandler(self, fn, inputs, outputs, defaultValue) {
         if (fn === undefined) {
             var repr = Methanal.Util.repr;
             throw Methanal.View.HandlerError(
@@ -206,7 +211,7 @@ Divmod.Class.subclass(Methanal.View, '_HandlerCache').methods(
         }
 
         var handler = Methanal.View._Handler(
-            self._handlerID, self, fn, inputs, outputs);
+            self._handlerID, self, fn, inputs, outputs, defaultValue);
 
         self._updateHandlerMapping(inputs, self._inputToHandlers);
         self._updateHandlerMapping(outputs, self._outputToHandlers);
@@ -724,8 +729,8 @@ Nevow.Athena.Widget.subclass(Methanal.View, 'FormBehaviour').methods(
      *
      * Use L{addDepCheckers} to attach more than one "checker" at a time.
      */
-    function addDepChecker(self, inputNames, outputNames, fn) {
-        self._depCache.addHandler(fn, inputNames, outputNames);
+    function addDepChecker(self, inputNames, outputNames, fn, defaultValue) {
+        self._depCache.addHandler(fn, inputNames, outputNames, defaultValue);
     },
 
 
@@ -745,7 +750,25 @@ Nevow.Athena.Widget.subclass(Methanal.View, 'FormBehaviour').methods(
             var fn = checkers[i][2];
             self.addDepChecker(inputNames, outputNames, fn);
         }
-    });
+    },
+
+    /**
+     * Add multiple lax dependency checkers.
+     *
+     * A lax dependency checker will not exit early in the event that one of the
+     * input fields is inactive. This can be useful for situations where a group
+     * of fields can be influenced by multiple inputs with varying conditions.
+     * In effect simulating a logical "OR" condition.
+     */
+    function addLaxDepCheckers(self, checkers) {
+        for (var i = 0; i < checkers.length; ++i) {
+            var inputNames = checkers[i][0];
+            var outputNames = checkers[i][1];
+            var fn = checkers[i][2];
+            self.addDepChecker(inputNames, outputNames, fn, null);
+        }
+    }
+);
 
 
 
