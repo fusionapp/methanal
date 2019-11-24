@@ -62,15 +62,13 @@ Divmod.Class.subclass(Methanal.View, '_Handler').methods(
         for (var j = 0; j < self.inputs.length; ++j) {
             var name = self.inputs[j];
             var value;
-            if (!self.cache.isActive(name)) {
-                if (self.defaultValue === undefined) {
-                    self.value = self.cache.failureValue;
-                    return;
-                } else {
-                    value = self.defaultValue;
-                }
-            } else {
+            if (self.cache.isActive(name)) {
                 value = self.cache.getData(name);
+            } else if (self.defaultValue !== undefined) {
+                value = self.defaultValue;
+            } else {
+                self.value = self.cache.failureValue;
+                return;
             }
             values.push(value);
         }
@@ -767,7 +765,7 @@ Nevow.Athena.Widget.subclass(Methanal.View, 'FormBehaviour').methods(
             var inputNames = checkers[i][0];
             var outputNames = checkers[i][1];
             var fn = checkers[i][2];
-            self.addDepChecker(inputNames, outputNames, fn, true);
+            self.addDepChecker(inputNames, outputNames, fn, null);
         }
     }
 );
